@@ -32,8 +32,8 @@ void SystemClock_Config(void);
 void PeriphCommonClock_Config(void);
 
 // Buzzer library
-#include "Buzzer.h" // Not used but included for completeness and future expansion of the demo to include buzzer functionality
-#include "PWM.h"    // For PWM control of the LED 
+#include "Buzzer.h" // For buzzer control using TIM2
+#include "PWM.h"    // For PWM control of the LED - not used in this demo but included for completeness and future expansion
 #include "LCD.h"  // For LCD demonstration 
 #include "Joystick.h" // include the Joystick driver functions
 #include "PongEngine.h" // Main pong game engine
@@ -94,14 +94,14 @@ PWM_cfg_t pwm_cfg = {
 };
 
 // ===== FSM STATE DEFINITIONS =====
-
-// ===== NO OUTER FSM =====
-// This demo focuses on a SINGLE CHARACTER FSM for the game sprite. There is no overarching game state machine in this demo.
-// The character has its own internal FSM (IDLE/RUNNING/JUMPING) that runs continuously.
-
-
+// For this Pong demo, we will not use a complex FSM with multiple states like the character demo.
+// Instead, we will have a single "game running" state and a "game over" state. 
+// The main game loop will run while the game is active, and when the player loses all lives, 
+// it will transition to the game over state which displays the final score.
 
 // ===== UTILITY FUNCTIONS =====
+
+// Other utility functions (e.g. for collision detection) are defined in Utils.h
 
 /**
  * @brief Redirect printf to UART for debugging
@@ -111,7 +111,7 @@ int _write(int file, char *ptr, int len) {
     return len;
 }
 
-// ===== CHARACTER FSM VARIABLES =====
+// ===== PONG GAME GLOBAL VARIABLES =====
 // Global pong game engine
 PongEngine_t pong_engine;
 
@@ -119,6 +119,8 @@ PongEngine_t pong_engine;
 volatile uint8_t game_over = 0;
 
 // Frame timing
+// For a smooth game experience, we want to run the game loop at a consistent frame rate (e.g. 60 FPS).
+// In this game we are not doing many calculations, so we can afford to do a full clear and redraw each frame for simplicity.
 #define FPS 60
 #define FRAME_TIME_MS (1000 / FPS)
 
@@ -133,7 +135,7 @@ void render_pong(void);
 // ===== Main Function =====
 
 /**
-  * @brief  The application entry point - Character FSM Demo
+  * @brief  The application entry point - Pong Game Demo
   * @retval int
   */
 int main(void)
@@ -169,8 +171,8 @@ int main(void)
                     100,    // roughly center Y
                     4,      // paddle width (4 pixels)
                     40,     // paddle height (40 pixels)
-                    6,      // ball size (6 pixels) - larger for visibility
-                    8.0f);  // ball speed (increased from 2.5f)
+                    6,      // ball size (6 pixels - adjust for difficulty)
+                    8.0f);  // ball speed (8 pixels/frame - adjust for difficulty)
     
     // Clear screen
     LCD_Fill_Buffer(0);
@@ -190,7 +192,7 @@ int main(void)
     LCD_Refresh(&cfg0);
     HAL_Delay(2000);
 
-    // Initialize PWM for LED control
+    // Initialize PWM for LED control - not used in this demo but included for completeness and future expansion
     PWM_Init(&pwm_cfg);
     PWM_SetFreq(&pwm_cfg, 1000);
     PWM_SetDuty(&pwm_cfg, 0);
@@ -306,6 +308,12 @@ void render_pong(void) {
 // ===== Interrupt Callback =====
 // Note: Pong game only uses joystick input which is handled synchronously in the main loop.
 // If button input is needed in the future, an interrupt handler can be added here.
+
+
+
+
+
+
 
 // ==== AUTO-GENERATED STM32 FUNCTIONS ====
 // DO NOT EDIT UNLESS YOU KNOW WHAT YOU ARE DOING! 
